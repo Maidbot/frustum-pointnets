@@ -15,7 +15,7 @@ def huber_loss(error, delta):
     quadratic = tf.minimum(abs_error, delta)
     linear = (abs_error - quadratic)
     losses = 0.5 * quadratic**2 + delta * linear
-    return tf.reduce_mean(losses)
+    return tf.reduce_mean(input_tensor=losses)
 
 
 def get_box3d_corners_helper(centers, headings, sizes):
@@ -42,7 +42,7 @@ def get_box3d_corners_helper(centers, headings, sizes):
     print row1, row2, row3, R, N
     corners_3d = tf.matmul(R, corners) # (N,3,8)
     corners_3d += tf.tile(tf.expand_dims(centers,2), [1,1,8]) # (N,3,8)
-    corners_3d = tf.transpose(corners_3d, perm=[0,2,1]) # (N,8,3)
+    corners_3d = tf.transpose(a=corners_3d, perm=[0,2,1]) # (N,8,3)
     return corners_3d
 
 def get_box3d_corners(center, heading_residuals, size_residuals):

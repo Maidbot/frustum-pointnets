@@ -48,17 +48,17 @@ def get_model(batch_size, num_point):
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
             pointclouds_pl, one_hot_vec_pl, labels_pl, centers_pl, heading_class_label_pl, heading_residual_label_pl, size_class_label_pl, size_residual_label_pl = MODEL.placeholder_inputs(batch_size, num_point)
-            is_training_pl = tf.placeholder(tf.bool, shape=())
+            is_training_pl = tf.compat.v1.placeholder(tf.bool, shape=())
             pred, end_points = MODEL.get_model(pointclouds_pl, one_hot_vec_pl, is_training_pl)
             loss = MODEL.get_loss(pred, labels_pl, centers_pl, heading_class_label_pl, heading_residual_label_pl, size_class_label_pl, size_residual_label_pl, end_points)
-            saver = tf.train.Saver()
+            saver = tf.compat.v1.train.Saver()
         #for v in tf.global_variables():
         #    print(v.name)
         # Create a session
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.allow_soft_placement = True
-        sess = tf.Session(config=config)
+        sess = tf.compat.v1.Session(config=config)
         # Restore variables from disk.
         saver.restore(sess, MODEL_PATH)
         ops = {'pointclouds_pl': pointclouds_pl,

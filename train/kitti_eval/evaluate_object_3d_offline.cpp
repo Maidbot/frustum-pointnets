@@ -502,6 +502,7 @@ tPrData computeStatistics(CLASSES current_class, const vector<tGroundtruth> &gt,
         continue;
 
       // find the maximum score for the candidates and get idx of respective detection
+      std::cout << "CALLING BOX OVERLAP" << std::endl;
       double overlap = boxoverlap(det[j], gt[i], -1);
 
       // for computing recall thresholds, the candidate with highest score is considered
@@ -877,6 +878,7 @@ bool eval(string gt_dir, string result_dir, Mail* mail){
   for (int c = 0; c < NUM_CLASS; c++) {
     CLASSES cls = (CLASSES)c;
     if (eval_ground[c]) {
+      std::cout << result_dir + "/stats_" + CLASS_NAMES[c] + "_detection_ground.txt" << std::endl;
       fp_det = fopen((result_dir + "/stats_" + CLASS_NAMES[c] + "_detection_ground.txt").c_str(), "w");
       vector<double> precision[3], aos[3];
       printf("Going to eval ground for class: %s\n", CLASS_NAMES[c].c_str());
@@ -946,5 +948,3 @@ int32_t main (int32_t argc,char *argv[]) {
 
   return 0;
 }
-
-

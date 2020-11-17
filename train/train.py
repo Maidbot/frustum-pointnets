@@ -75,7 +75,7 @@ def log_string(out_str):
     print(out_str)
 
 def get_learning_rate(batch):
-    learning_rate = tf.train.exponential_decay(
+    learning_rate = tf.compat.v1.train.exponential_decay(
                         BASE_LEARNING_RATE,  # Base learning rate.
                         batch * BATCH_SIZE,  # Current index into the dataset.
                         DECAY_STEP,          # Decay step.
@@ -85,7 +85,7 @@ def get_learning_rate(batch):
     return learning_rate        
 
 def get_bn_decay(batch):
-    bn_momentum = tf.train.exponential_decay(
+    bn_momentum = tf.compat.v1.train.exponential_decay(
                       BN_INIT_DECAY,
                       batch*BATCH_SIZE,
                       BN_DECAY_DECAY_STEP,
@@ -103,15 +103,15 @@ def train():
             size_class_label_pl, size_residual_label_pl = \
                 MODEL.placeholder_inputs(BATCH_SIZE, NUM_POINT)
 
-            is_training_pl = tf.placeholder(tf.bool, shape=())
+            is_training_pl = tf.compat.v1.placeholder(tf.bool, shape=())
             
             # Note the global_step=batch parameter to minimize. 
             # That tells the optimizer to increment the 'batch' parameter
             # for you every time it trains.
-            batch = tf.get_variable('batch', [],
-                initializer=tf.constant_initializer(0), trainable=False)
+            batch = tf.compat.v1.get_variable('batch', [],
+                initializer=tf.compat.v1.constant_initializer(0), trainable=False)
             bn_decay = get_bn_decay(batch)
-            tf.summary.scalar('bn_decay', bn_decay)
+            tf.compat.v1.summary.scalar('bn_decay', bn_decay)
 
             # Get model and losses 
             end_points = MODEL.get_model(pointclouds_pl, one_hot_vec_pl,
@@ -119,14 +119,14 @@ def train():
             loss = MODEL.get_loss(labels_pl, centers_pl,
                 heading_class_label_pl, heading_residual_label_pl,
                 size_class_label_pl, size_residual_label_pl, end_points)
-            tf.summary.scalar('loss', loss)
+            tf.compat.v1.summary.scalar('loss', loss)
 
-            losses = tf.get_collection('losses')
+            losses = tf.compat.v1.get_collection('losses')
             total_loss = tf.add_n(losses, name='total_loss')
-            tf.summary.scalar('total_loss', total_loss)
+            tf.compat.v1.summary.scalar('total_loss', total_loss)
 
             # Write summaries of bounding box IoU and segmentation accuracies
-            iou2ds, iou3ds = tf.py_func(provider.compute_box3d_iou, [\
+            iou2ds, iou3ds = tf.compat.v1.py_func(provider.compute_box3d_iou, [\
                 end_points['center'], \
                 end_points['heading_scores'], end_points['heading_residuals'], \
                 end_points['size_scores'], end_points['size_residuals'], \
@@ -136,43 +136,43 @@ def train():
                 [tf.float32, tf.float32])
             end_points['iou2ds'] = iou2ds 
             end_points['iou3ds'] = iou3ds 
-            tf.summary.scalar('iou_2d', tf.reduce_mean(iou2ds))
-            tf.summary.scalar('iou_3d', tf.reduce_mean(iou3ds))
+            tf.compat.v1.summary.scalar('iou_2d', tf.reduce_mean(input_tensor=iou2ds))
+            tf.compat.v1.summary.scalar('iou_3d', tf.reduce_mean(input_tensor=iou3ds))
 
-            correct = tf.equal(tf.argmax(end_points['mask_logits'], 2),
-                tf.to_int64(labels_pl))
-            accuracy = tf.reduce_sum(tf.cast(correct, tf.float32)) / \
+            correct = tf.equal(tf.argmax(input=end_points['mask_logits'], axis=2),
+                tf.cast(labels_pl, dtype=tf.int64))
+            accuracy = tf.reduce_sum(input_tensor=tf.cast(correct, tf.float32)) / \
                 float(BATCH_SIZE*NUM_POINT)
-            tf.summary.scalar('segmentation accuracy', accuracy)
+            tf.compat.v1.summary.scalar('segmentation accuracy', accuracy)
 
             # Get training operator
             learning_rate = get_learning_rate(batch)
-            tf.summary.scalar('learning_rate', learning_rate)
+            tf.compat.v1.summary.scalar('learning_rate', learning_rate)
             if OPTIMIZER == 'momentum':
-                optimizer = tf.train.MomentumOptimizer(learning_rate,
+                optimizer = tf.compat.v1.train.MomentumOptimizer(learning_rate,
                     momentum=MOMENTUM)
             elif OPTIMIZER == 'adam':
-                optimizer = tf.train.AdamOptimizer(learning_rate)
+                optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)
             train_op = optimizer.minimize(loss, global_step=batch)
             
             # Add ops to save and restore all the variables.
-            saver = tf.train.Saver()
+            saver = tf.compat.v1.train.Saver()
         
         # Create a session
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.allow_soft_placement = True
         config.log_device_placement = False
-        sess = tf.Session(config=config)
+        sess = tf.compat.v1.Session(config=config)
 
         # Add summary writers
-        merged = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'train'), sess.graph)
-        test_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'test'), sess.graph)
+        merged = tf.compat.v1.summary.merge_all()
+        train_writer = tf.compat.v1.summary.FileWriter(os.path.join(LOG_DIR, 'train'), sess.graph)
+        test_writer = tf.compat.v1.summary.FileWriter(os.path.join(LOG_DIR, 'test'), sess.graph)
 
         # Init variables
         if FLAGS.restore_model_path is None:
-            init = tf.global_variables_initializer()
+            init = tf.compat.v1.global_variables_initializer()
             sess.run(init)
         else:
             saver.restore(sess, FLAGS.restore_model_path)

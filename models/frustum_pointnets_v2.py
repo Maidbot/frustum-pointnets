@@ -86,7 +86,7 @@ def get_3d_box_estimation_v2_net(object_point_cloud, one_hot_vec,
             and size cluster scores and residuals
     ''' 
     # Gather object points
-    batch_size = object_point_cloud.get_shape()[0].value
+    batch_size = object_point_cloud.get_shape().as_list()[0]
 
     l0_xyz = object_point_cloud
     l0_points = None

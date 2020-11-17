@@ -31,8 +31,8 @@ def get_instance_seg_v1_net(point_cloud, one_hot_vec,
         logits: TF tensor in shape (B,N,2), scores for bkg/clutter and object
         end_points: dict
     '''
-    batch_size = point_cloud.get_shape()[0].value
-    num_point = point_cloud.get_shape()[1].value
+    batch_size = point_cloud.get_shape().as_list()[0]
+    num_point = point_cloud.get_shape().as_list()[1]
 
     net = tf.expand_dims(point_cloud, 2)
 
@@ -43,7 +43,7 @@ def get_instance_seg_v1_net(point_cloud, one_hot_vec,
     net = tf_util.conv2d(net, 64, [1,1],
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
-                         scope='conv2', bn_decay=bn_decay)
+                         scope='conv2', bn_decay=bn_decay)    
     point_feat = tf_util.conv2d(net, 64, [1,1],
                          padding='VALID', stride=[1,1],
                          bn=True, is_training=is_training,
@@ -101,7 +101,7 @@ def get_3d_box_estimation_v1_net(object_point_cloud, one_hot_vec,
             including box centers, heading bin class scores and residuals,
             and size cluster scores and residuals
     ''' 
-    num_point = object_point_cloud.get_shape()[1].value
+    num_point = object_point_cloud.get_shape().as_list()[1]
     net = tf.expand_dims(object_point_cloud, 2)
     net = tf_util.conv2d(net, 128, [1,1],
                          padding='VALID', stride=[1,1],
@@ -153,6 +153,7 @@ def get_model(point_cloud, one_hot_vec, is_training, bn_decay=None):
     '''
     end_points = {}
     
+    print("GETTING MODEL")
     # 3D Instance Segmentation PointNet
     logits, end_points = get_instance_seg_v1_net(\
         point_cloud, one_hot_vec,
@@ -189,8 +190,10 @@ if __name__=='__main__':
     with tf.Graph().as_default():
         inputs = tf.zeros((32,1024,4))
         outputs = get_model(inputs, tf.ones((32,3)), tf.constant(True))
+        print("OUTPUTS")
         for key in outputs:
             print((key, outputs[key]))
+        print("=====================================================")
         loss = get_loss(tf.zeros((32,1024),dtype=tf.int32),
             tf.zeros((32,3)), tf.zeros((32,),dtype=tf.int32),
             tf.zeros((32,)), tf.zeros((32,),dtype=tf.int32),

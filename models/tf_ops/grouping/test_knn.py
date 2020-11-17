@@ -27,12 +27,12 @@ k = 3
 a = tf.tile(tf.reshape(a, (2,1,5,3)), [1,2,1,1])
 b = tf.tile(tf.reshape(b, (2,2,1,3)), [1,1,5,1])
 
-dist = -tf.reduce_sum((a-b)**2, -1)
+dist = -tf.reduce_sum(input_tensor=(a-b)**2, axis=-1)
 print(dist)
 
 val, idx = tf.nn.top_k(dist, k=k)
 print(val, idx)
-sess = tf.Session()
+sess = tf.compat.v1.Session()
 print(sess.run(a))
 print(sess.run(b))
 print(sess.run(dist))
